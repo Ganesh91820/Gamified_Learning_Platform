@@ -126,6 +126,28 @@ const mockClassStats: ClassStats = {
 export function TeacherDashboard() {
   const [selectedTimeframe, setSelectedTimeframe] = useState("week")
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [statusFilter, setStatusFilter] = useState<string>("all")
+
+  const handleExportCSV = () => {
+    const headers = "Name,Level,XP,Accuracy,Streak,Quizzes,Status\n"
+    const rows = mockStudents
+      .map(s => `"${s.name}",${s.level},${s.xp},${s.accuracy}%,${s.streak},${s.totalQuizzes},${s.status}`)
+      .join("\n")
+    const blob = new Blob([headers + rows], { type: "text/csv" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `class_performance_report_${new Date().toISOString().split("T")[0]}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const filteredStudents = mockStudents.filter((student) => {
+    const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = statusFilter === "all" || student.status === statusFilter
+    return matchesSearch && matchesStatus
+  })
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -167,7 +189,7 @@ export function TeacherDashboard() {
   return (
     <div className="container mx-auto p-4 max-w-7xl space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-primary">Teacher Dashboard</h1>
           <p className="text-muted-foreground">Monitor student progress and classroom analytics</p>
@@ -183,13 +205,9 @@ export function TeacherDashboard() {
               <SelectItem value="quarter">This Quarter</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleExportCSV}>
             <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-          <Button variant="outline">
-            <Settings className="h-4 w-4 mr-2" />
-            Settings
+            Export CSV
           </Button>
         </div>
       </div>
@@ -251,12 +269,34 @@ export function TeacherDashboard() {
         <TabsContent value="students" className="space-y-6">
           {/* Student List */}
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <CardTitle>Student Overview</CardTitle>
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <input
+                  type="text"
+                  placeholder="Search student..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="px-3 py-1.5 border rounded-md text-sm bg-background w-full sm:w-48"
+                />
+                <div className="flex gap-1">
+                  {["all", "active", "struggling", "inactive"].map((status) => (
+                    <Button
+                      key={status}
+                      variant={statusFilter === status ? "default" : "outline"}
+                      size="sm"
+                      className="capitalize text-xs"
+                      onClick={() => setStatusFilter(status)}
+                    >
+                      {status}
+                    </Button>
+                  ))}
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {mockStudents.map((student) => (
+                {filteredStudents.map((student) => (
                   <div
                     key={student.id}
                     className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 cursor-pointer"
@@ -295,6 +335,9 @@ export function TeacherDashboard() {
                     </div>
                   </div>
                 ))}
+                {filteredStudents.length === 0 && (
+                  <div className="text-center py-6 text-muted-foreground">No students match your filter criteria.</div>
+                )}
               </div>
             </CardContent>
           </Card>

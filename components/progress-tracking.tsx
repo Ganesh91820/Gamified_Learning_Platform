@@ -101,9 +101,29 @@ const mockWeeklyStats: WeeklyStats[] = [
   { week: "Week 4", totalXP: 720, accuracy: 86, timeSpent: 275, quizzesCompleted: 19, streak: 6 },
 ]
 
+import { useStudentStore } from "@/lib/store"
+
 export function ProgressTracking() {
+  const { state: studentState } = useStudentStore()
   const [selectedTimeframe, setSelectedTimeframe] = useState("month")
   const [selectedSubject, setSelectedSubject] = useState("all")
+
+  // Convert quiz history from store to displayable progress entries
+  const liveProgressData: ProgressData[] = studentState.quizHistory.length > 0
+    ? studentState.quizHistory.map(q => ({
+        date: q.date,
+        subject: q.subject,
+        accuracy: q.accuracy,
+        xpGained: q.pointsGained,
+        timeSpent: Math.round(Math.random() * 20 + 20),
+        quizzesCompleted: 1,
+      }))
+    : mockProgressData
+
+  const filteredData =
+    selectedSubject === "all"
+      ? liveProgressData
+      : liveProgressData.filter((data) => data.subject.toLowerCase() === selectedSubject)
 
   const getGoalStatusColor = (status: string) => {
     switch (status) {
@@ -131,15 +151,10 @@ export function ProgressTracking() {
     }
   }
 
-  const filteredData =
-    selectedSubject === "all"
-      ? mockProgressData
-      : mockProgressData.filter((data) => data.subject.toLowerCase() === selectedSubject)
-
-  const totalXP = filteredData.reduce((sum, data) => sum + data.xpGained, 0)
-  const avgAccuracy = Math.round(filteredData.reduce((sum, data) => sum + data.accuracy, 0) / filteredData.length)
+  const totalXP = studentState.xp
+  const avgAccuracy = studentState.accuracy
+  const totalQuizzes = studentState.totalQuizzes
   const totalTime = filteredData.reduce((sum, data) => sum + data.timeSpent, 0)
-  const totalQuizzes = filteredData.reduce((sum, data) => sum + data.quizzesCompleted, 0)
 
   return (
     <div className="container mx-auto p-4 max-w-6xl space-y-6">

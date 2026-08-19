@@ -1,47 +1,36 @@
 "use client"
 
-import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Trophy, Star, Brain, Target, BookOpen, Award, Play, Users, Gift, Zap, TrendingUp } from "lucide-react"
 import Link from "next/link"
-
-interface StudentStats {
-  level: number
-  xp: number
-  xpToNext: number
-  streak: number
-  totalQuizzes: number
-  accuracy: number
-  badges: string[]
-  coins: number
-}
+import { useStudentStore } from "@/lib/store"
 
 export function StudentDashboard() {
-  const [studentStats] = useState<StudentStats>({
-    level: 5,
-    xp: 1250,
-    xpToNext: 1500,
-    streak: 7,
-    totalQuizzes: 23,
-    accuracy: 85,
-    badges: ["Math Wizard", "Science Explorer", "Quick Learner"],
-    coins: 320,
-  })
+  const { state: studentStats } = useStudentStore()
+
+  // Calculate dynamic subject progress based on quiz history
+  const getSubjectAccuracy = (subjectName: string, defaultVal: number) => {
+    const history = studentStats.quizHistory.filter(
+      (q) => q.subject.toLowerCase() === subjectName.toLowerCase()
+    )
+    if (history.length === 0) return defaultVal
+    return Math.round(history.reduce((sum, q) => sum + q.accuracy, 0) / history.length)
+  }
 
   const subjects = [
-    { name: "Mathematics", icon: Target, progress: 75, color: "bg-primary" },
-    { name: "Science", icon: Brain, progress: 60, color: "bg-secondary" },
-    { name: "English", icon: BookOpen, progress: 90, color: "bg-chart-3" },
-    { name: "History", icon: Award, progress: 45, color: "bg-chart-4" },
+    { name: "Mathematics", icon: Target, progress: getSubjectAccuracy("Mathematics", 75), color: "bg-primary" },
+    { name: "Science", icon: Brain, progress: getSubjectAccuracy("Science", 60), color: "bg-secondary" },
+    { name: "English", icon: BookOpen, progress: getSubjectAccuracy("English", 90), color: "bg-chart-3" },
+    { name: "History", icon: Award, progress: getSubjectAccuracy("History", 45), color: "bg-chart-4" },
   ]
 
   const recentAchievements = [
-    { title: "Perfect Score!", description: "Got 100% in Math Quiz", icon: Trophy },
-    { title: "Week Streak", description: "7 days of continuous learning", icon: Star },
-    { title: "Fast Learner", description: "Completed 5 quizzes today", icon: Brain },
+    { title: "Perfect Score!", description: "Got 100% in Quiz", icon: Trophy },
+    { title: `${studentStats.streak} Day Streak`, description: `${studentStats.streak} days of continuous learning`, icon: Star },
+    { title: "Fast Learner", description: `Completed ${studentStats.totalQuizzes} quizzes so far`, icon: Brain },
   ]
 
   return (

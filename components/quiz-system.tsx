@@ -5,17 +5,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, XCircle, Clock, Star, Trophy, ArrowRight, RotateCcw } from "lucide-react"
+import { CheckCircle, XCircle, Clock, Star, Trophy, ArrowRight, RotateCcw, Target, Brain, BookOpen, Award, Sparkles } from "lucide-react"
+import { useStudentStore } from "@/lib/store"
+import Link from "next/link"
 
 interface Question {
   id: number
-  type: "multiple-choice" | "true-false" | "memory" | "logic"
+  type: "multiple-choice" | "true-false" | "logic"
   question: string
   options?: string[]
   correctAnswer: string | number
   explanation: string
   difficulty: "easy" | "medium" | "hard"
-  subject: string
+  subject: "Mathematics" | "Science" | "English" | "History" | "Logic"
   points: number
 }
 
@@ -25,7 +27,8 @@ interface QuizResult {
   points: number
 }
 
-const sampleQuestions: Question[] = [
+const QUESTION_BANK: Question[] = [
+  // Mathematics
   {
     id: 1,
     type: "multiple-choice",
@@ -39,16 +42,39 @@ const sampleQuestions: Question[] = [
   },
   {
     id: 2,
+    type: "multiple-choice",
+    question: "What is the square root of 64?",
+    options: ["6", "7", "8", "9"],
+    correctAnswer: 2,
+    explanation: "8 × 8 = 64, so the square root of 64 is 8.",
+    difficulty: "medium",
+    subject: "Mathematics",
+    points: 15,
+  },
+  {
+    id: 3,
+    type: "multiple-choice",
+    question: "If a triangle has angles 60° and 30°, what is the third angle?",
+    options: ["90°", "60°", "45°", "100°"],
+    correctAnswer: 0,
+    explanation: "The interior angles of any triangle sum to 180°. 180° - 60° - 30° = 90°.",
+    difficulty: "medium",
+    subject: "Mathematics",
+    points: 15,
+  },
+  // Science
+  {
+    id: 4,
     type: "true-false",
     question: "The Earth revolves around the Sun.",
     correctAnswer: "true",
-    explanation: "Correct! The Earth orbits around the Sun, completing one revolution in about 365 days.",
+    explanation: "Correct! The Earth orbits around the Sun, completing one revolution in about 365.25 days.",
     difficulty: "easy",
     subject: "Science",
     points: 10,
   },
   {
-    id: 3,
+    id: 5,
     type: "multiple-choice",
     question: "Which planet is known as the Red Planet?",
     options: ["Venus", "Mars", "Jupiter", "Saturn"],
@@ -59,12 +85,59 @@ const sampleQuestions: Question[] = [
     points: 15,
   },
   {
-    id: 4,
+    id: 6,
+    type: "multiple-choice",
+    question: "What process do plants use to make food using sunlight?",
+    options: ["Respiration", "Photosynthesis", "Fermentation", "Transpiration"],
+    correctAnswer: 1,
+    explanation: "Photosynthesis converts light energy, water, and CO₂ into oxygen and glucose.",
+    difficulty: "easy",
+    subject: "Science",
+    points: 10,
+  },
+  // English
+  {
+    id: 7,
+    type: "multiple-choice",
+    question: "Which word is a synonym for 'Abundant'?",
+    options: ["Scarce", "Plentiful", "Tiny", "Empty"],
+    correctAnswer: 1,
+    explanation: "'Abundant' means present in large quantities, which is synonymous with 'Plentiful'.",
+    difficulty: "medium",
+    subject: "English",
+    points: 15,
+  },
+  {
+    id: 8,
+    type: "multiple-choice",
+    question: "Identify the noun in the sentence: 'The swift runner won the medal.'",
+    options: ["Swift", "Runner", "Won", "Quickly"],
+    correctAnswer: 1,
+    explanation: "'Runner' is the person performing the action (a noun).",
+    difficulty: "easy",
+    subject: "English",
+    points: 10,
+  },
+  // History
+  {
+    id: 9,
+    type: "multiple-choice",
+    question: "Who was the first President of the United States?",
+    options: ["Thomas Jefferson", "Abraham Lincoln", "George Washington", "John Adams"],
+    correctAnswer: 2,
+    explanation: "George Washington served as the first U.S. President from 1789 to 1797.",
+    difficulty: "easy",
+    subject: "History",
+    points: 10,
+  },
+  // Logic
+  {
+    id: 10,
     type: "logic",
     question: "If all cats are animals, and Fluffy is a cat, then Fluffy is:",
     options: ["A dog", "An animal", "A bird", "A fish"],
     correctAnswer: 1,
-    explanation: "This is logical reasoning: All cats → animals, Fluffy is a cat → Fluffy is an animal.",
+    explanation: "Logical syllogism: All cats → animals, Fluffy is a cat → Fluffy is an animal.",
     difficulty: "medium",
     subject: "Logic",
     points: 20,
@@ -72,6 +145,8 @@ const sampleQuestions: Question[] = [
 ]
 
 export function QuizSystem() {
+  const { recordQuizResult } = useStudentStore()
+  const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<string>("All")
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [selectedAnswer, setSelectedAnswer] = useState<string | number | null>(null)
   const [showResult, setShowResult] = useState(false)
@@ -79,31 +154,37 @@ export function QuizSystem() {
   const [timeLeft, setTimeLeft] = useState(30)
   const [quizStarted, setQuizStarted] = useState(false)
   const [quizCompleted, setQuizCompleted] = useState(false)
-  const [startTime, setStartTime] = useState<number>(0)
 
-  const question = sampleQuestions[currentQuestion]
-  const totalQuestions = sampleQuestions.length
+  const activeQuestions = selectedSubjectFilter === "All"
+    ? QUESTION_BANK
+    : QUESTION_BANK.filter(q => q.subject === selectedSubjectFilter)
+
+  const question = activeQuestions[currentQuestion] || QUESTION_BANK[0]
+  const totalQuestions = activeQuestions.length
 
   // Timer effect
   useEffect(() => {
     if (quizStarted && !showResult && !quizCompleted && timeLeft > 0) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000)
       return () => clearTimeout(timer)
-    } else if (timeLeft === 0 && !showResult) {
+    } else if (timeLeft === 0 && !showResult && quizStarted) {
       handleAnswer()
     }
   }, [timeLeft, quizStarted, showResult, quizCompleted])
 
   const startQuiz = () => {
     setQuizStarted(true)
-    setStartTime(Date.now())
+    setCurrentQuestion(0)
+    setQuizResults([])
+    setShowResult(false)
+    setSelectedAnswer(null)
     setTimeLeft(30)
   }
 
   const handleAnswer = () => {
     const timeSpent = 30 - timeLeft
     const isCorrect = selectedAnswer === question.correctAnswer
-    const points = isCorrect ? question.points + Math.max(0, timeLeft) : 0
+    const points = isCorrect ? question.points + Math.max(0, Math.floor(timeLeft / 2)) : 0
 
     const result: QuizResult = {
       correct: isCorrect,
@@ -111,7 +192,8 @@ export function QuizSystem() {
       points,
     }
 
-    setQuizResults([...quizResults, result])
+    const updatedResults = [...quizResults, result]
+    setQuizResults(updatedResults)
     setShowResult(true)
   }
 
@@ -122,7 +204,18 @@ export function QuizSystem() {
       setShowResult(false)
       setTimeLeft(30)
     } else {
+      // Complete quiz and persist results
       setQuizCompleted(true)
+      const totalScore = [...quizResults].reduce((sum, r) => sum + r.points, 0) + 
+        (selectedAnswer === question.correctAnswer ? (question.points + Math.max(0, Math.floor(timeLeft / 2))) : 0)
+      const correctCount = quizResults.filter(r => r.correct).length + (selectedAnswer === question.correctAnswer ? 1 : 0)
+      
+      recordQuizResult(
+        selectedSubjectFilter === "All" ? "General" : selectedSubjectFilter,
+        correctCount,
+        totalQuestions,
+        totalScore
+      )
     }
   }
 
@@ -141,15 +234,36 @@ export function QuizSystem() {
 
   if (!quizStarted) {
     return (
-      <div className="container mx-auto p-4 max-w-2xl">
+      <div className="container mx-auto p-4 max-w-2xl space-y-6">
         <Card className="text-center">
           <CardHeader>
-            <CardTitle className="text-2xl text-primary">Ready for a Quiz Challenge?</CardTitle>
+            <CardTitle className="text-2xl text-primary flex items-center justify-center gap-2">
+              <Sparkles className="h-6 w-6 text-yellow-500" />
+              Ready for a Quiz Challenge?
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="text-muted-foreground">
-              Test your knowledge across different subjects and earn XP points!
+              Choose a subject or take a general challenge to earn XP points and Coins!
             </div>
+
+            {/* Subject Selector */}
+            <div className="space-y-2 text-left">
+              <label className="text-sm font-semibold text-foreground">Select Subject:</label>
+              <div className="flex flex-wrap gap-2">
+                {["All", "Mathematics", "Science", "English", "History", "Logic"].map((subj) => (
+                  <Button
+                    key={subj}
+                    variant={selectedSubjectFilter === subj ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedSubjectFilter(subj)}
+                  >
+                    {subj}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="p-3 bg-muted/50 rounded-lg">
                 <div className="font-semibold">Questions</div>
@@ -160,8 +274,9 @@ export function QuizSystem() {
                 <div>30 seconds</div>
               </div>
             </div>
+
             <Button onClick={startQuiz} size="lg" className="w-full">
-              Start Quiz
+              Start Quiz ({selectedSubjectFilter})
             </Button>
           </CardContent>
         </Card>
@@ -174,11 +289,11 @@ export function QuizSystem() {
     const performance = accuracy >= 80 ? "Excellent!" : accuracy >= 60 ? "Good Job!" : "Keep Practicing!"
 
     return (
-      <div className="container mx-auto p-4 max-w-2xl">
+      <div className="container mx-auto p-4 max-w-2xl space-y-6">
         <Card className="text-center">
           <CardHeader>
             <CardTitle className="text-2xl text-primary flex items-center justify-center gap-2">
-              <Trophy className="h-6 w-6" />
+              <Trophy className="h-7 w-7 text-yellow-500" />
               Quiz Complete!
             </CardTitle>
           </CardHeader>
@@ -187,8 +302,8 @@ export function QuizSystem() {
 
             <div className="grid grid-cols-3 gap-4">
               <div className="p-4 bg-primary/10 rounded-lg">
-                <div className="text-2xl font-bold text-primary">{totalScore}</div>
-                <div className="text-sm text-muted-foreground">Total Points</div>
+                <div className="text-2xl font-bold text-primary">+{totalScore}</div>
+                <div className="text-sm text-muted-foreground">XP Earned</div>
               </div>
               <div className="p-4 bg-secondary/10 rounded-lg">
                 <div className="text-2xl font-bold text-secondary">
@@ -196,9 +311,9 @@ export function QuizSystem() {
                 </div>
                 <div className="text-sm text-muted-foreground">Correct</div>
               </div>
-              <div className="p-4 bg-chart-3/10 rounded-lg">
-                <div className="text-2xl font-bold text-chart-3">{accuracy}%</div>
-                <div className="text-sm text-muted-foreground">Accuracy</div>
+              <div className="p-4 bg-yellow-500/10 rounded-lg">
+                <div className="text-2xl font-bold text-yellow-600">+{Math.round(totalScore / 2)}</div>
+                <div className="text-sm text-muted-foreground">Coins Earned</div>
               </div>
             </div>
 
@@ -206,7 +321,7 @@ export function QuizSystem() {
               <div className="text-sm font-medium">Performance Breakdown</div>
               {quizResults.map((result, index) => (
                 <div key={index} className="flex items-center justify-between p-2 bg-muted/30 rounded">
-                  <span className="text-sm">Question {index + 1}</span>
+                  <span className="text-sm font-medium">Question {index + 1} ({activeQuestions[index]?.subject})</span>
                   <div className="flex items-center gap-2">
                     {result.correct ? (
                       <CheckCircle className="h-4 w-4 text-green-500" />
@@ -222,12 +337,14 @@ export function QuizSystem() {
             <div className="flex gap-3">
               <Button onClick={restartQuiz} variant="outline" className="flex-1 bg-transparent">
                 <RotateCcw className="h-4 w-4 mr-2" />
-                Try Again
+                Try Another Quiz
               </Button>
-              <Button className="flex-1">
-                <Star className="h-4 w-4 mr-2" />
-                Continue Learning
-              </Button>
+              <Link href="/" className="flex-1">
+                <Button className="w-full">
+                  <Star className="h-4 w-4 mr-2" />
+                  View Dashboard
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
@@ -236,12 +353,12 @@ export function QuizSystem() {
   }
 
   return (
-    <div className="container mx-auto p-4 max-w-2xl">
+    <div className="container mx-auto p-4 max-w-2xl space-y-6">
       {/* Quiz Header */}
       <div className="mb-6">
         <div className="flex justify-between items-center mb-4">
           <Badge variant="secondary">{question.subject}</Badge>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 text-sm font-semibold text-primary">
             <Clock className="h-4 w-4" />
             {timeLeft}s
           </div>
@@ -286,14 +403,14 @@ export function QuizSystem() {
               <div className="grid grid-cols-2 gap-3">
                 <Button
                   variant={selectedAnswer === "true" ? "default" : "outline"}
-                  className="h-16"
+                  className="h-16 text-lg"
                   onClick={() => setSelectedAnswer("true")}
                 >
                   True
                 </Button>
                 <Button
                   variant={selectedAnswer === "false" ? "default" : "outline"}
-                  className="h-16"
+                  className="h-16 text-lg"
                   onClick={() => setSelectedAnswer("false")}
                 >
                   False
@@ -350,7 +467,7 @@ export function QuizSystem() {
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </>
               ) : (
-                "View Results"
+                "Finish Quiz"
               )}
             </Button>
           </CardContent>
