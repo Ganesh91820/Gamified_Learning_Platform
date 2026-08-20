@@ -5,8 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, XCircle, Clock, Star, Trophy, ArrowRight, RotateCcw, Target, Brain, BookOpen, Award, Sparkles } from "lucide-react"
+import { CheckCircle, XCircle, Clock, Star, Trophy, ArrowRight, RotateCcw, Sparkles, Bot } from "lucide-react"
 import { useStudentStore } from "@/lib/store"
+import { AIQuizGenerator } from "@/components/ai-quiz-generator"
+import { AITutorDialog } from "@/components/ai-tutor-dialog"
 import Link from "next/link"
 
 interface Question {
@@ -17,7 +19,7 @@ interface Question {
   correctAnswer: string | number
   explanation: string
   difficulty: "easy" | "medium" | "hard"
-  subject: "Mathematics" | "Science" | "English" | "History" | "Logic"
+  subject: string
   points: number
 }
 
@@ -147,6 +149,8 @@ const QUESTION_BANK: Question[] = [
 export function QuizSystem() {
   const { recordQuizResult } = useStudentStore()
   const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<string>("All")
+  const [customAIQuestions, setCustomAIQuestions] = useState<Question[] | null>(null)
+  const [customTopicTitle, setCustomTopicTitle] = useState<string>("")
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [selectedAnswer, setSelectedAnswer] = useState<string | number | null>(null)
   const [showResult, setShowResult] = useState(false)
@@ -154,10 +158,13 @@ export function QuizSystem() {
   const [timeLeft, setTimeLeft] = useState(30)
   const [quizStarted, setQuizStarted] = useState(false)
   const [quizCompleted, setQuizCompleted] = useState(false)
+  const [showAITutor, setShowAITutor] = useState(false)
 
-  const activeQuestions = selectedSubjectFilter === "All"
-    ? QUESTION_BANK
-    : QUESTION_BANK.filter(q => q.subject === selectedSubjectFilter)
+  const activeQuestions = customAIQuestions || (
+    selectedSubjectFilter === "All"
+      ? QUESTION_BANK
+      : QUESTION_BANK.filter(q => q.subject === selectedSubjectFilter)
+  )
 
   const question = activeQuestions[currentQuestion] || QUESTION_BANK[0]
   const totalQuestions = activeQuestions.length
@@ -173,6 +180,17 @@ export function QuizSystem() {
   }, [timeLeft, quizStarted, showResult, quizCompleted])
 
   const startQuiz = () => {
+    setQuizStarted(true)
+    setCurrentQuestion(0)
+    setQuizResults([])
+    setShowResult(false)
+    setSelectedAnswer(null)
+    setTimeLeft(30)
+  }
+
+  const handleAIQuizGenerated = (questions: Question[], topic: string) => {
+    setCustomAIQuestions(questions)
+    setCustomTopicTitle(topic)
     setQuizStarted(true)
     setCurrentQuestion(0)
     setQuizResults([])
@@ -204,14 +222,13 @@ export function QuizSystem() {
       setShowResult(false)
       setTimeLeft(30)
     } else {
-      // Complete quiz and persist results
       setQuizCompleted(true)
       const totalScore = [...quizResults].reduce((sum, r) => sum + r.points, 0) + 
         (selectedAnswer === question.correctAnswer ? (question.points + Math.max(0, Math.floor(timeLeft / 2))) : 0)
       const correctCount = quizResults.filter(r => r.correct).length + (selectedAnswer === question.correctAnswer ? 1 : 0)
       
       recordQuizResult(
-        selectedSubjectFilter === "All" ? "General" : selectedSubjectFilter,
+        customTopicTitle ? `AI: ${customTopicTitle}` : (selectedSubjectFilter === "All" ? "General" : selectedSubjectFilter),
         correctCount,
         totalQuestions,
         totalScore
@@ -220,6 +237,8 @@ export function QuizSystem() {
   }
 
   const restartQuiz = () => {
+    setCustomAIQuestions(null)
+    setCustomTopicTitle("")
     setCurrentQuestion(0)
     setSelectedAnswer(null)
     setShowResult(false)
@@ -234,29 +253,35 @@ export function QuizSystem() {
 
   if (!quizStarted) {
     return (
-      <div className="container mx-auto p-4 max-w-2xl space-y-6">
+      <div className="container mx-auto p-4 max-w-3xl space-y-6">
+        {/* Gemini AI Custom Quiz Generator */}
+        <AIQuizGenerator onQuizGenerated={handleAIQuizGenerated} />
+
+        {/* Standard Preset Quizzes */}
         <Card className="text-center">
           <CardHeader>
-            <CardTitle className="text-2xl text-primary flex items-center justify-center gap-2">
-              <Sparkles className="h-6 w-6 text-yellow-500" />
-              Ready for a Quiz Challenge?
+            <CardTitle className="text-xl font-bold text-primary flex items-center justify-center gap-2">
+              Or Choose Preset Subject Quizzes
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="text-muted-foreground">
-              Choose a subject or take a general challenge to earn XP points and Coins!
+            <div className="text-muted-foreground text-sm">
+              Practice core syllabus subjects with standard question banks:
             </div>
 
             {/* Subject Selector */}
             <div className="space-y-2 text-left">
-              <label className="text-sm font-semibold text-foreground">Select Subject:</label>
+              <label className="text-xs font-semibold text-foreground">Subject Filter:</label>
               <div className="flex flex-wrap gap-2">
                 {["All", "Mathematics", "Science", "English", "History", "Logic"].map((subj) => (
                   <Button
                     key={subj}
                     variant={selectedSubjectFilter === subj ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setSelectedSubjectFilter(subj)}
+                    onClick={() => {
+                      setSelectedSubjectFilter(subj)
+                      setCustomAIQuestions(null)
+                    }}
                   >
                     {subj}
                   </Button>
@@ -276,7 +301,7 @@ export function QuizSystem() {
             </div>
 
             <Button onClick={startQuiz} size="lg" className="w-full">
-              Start Quiz ({selectedSubjectFilter})
+              Start Preset Quiz ({selectedSubjectFilter})
             </Button>
           </CardContent>
         </Card>
@@ -294,7 +319,7 @@ export function QuizSystem() {
           <CardHeader>
             <CardTitle className="text-2xl text-primary flex items-center justify-center gap-2">
               <Trophy className="h-7 w-7 text-yellow-500" />
-              Quiz Complete!
+              {customTopicTitle ? `AI Quiz Complete: ${customTopicTitle}` : "Quiz Complete!"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -357,15 +382,32 @@ export function QuizSystem() {
       {/* Quiz Header */}
       <div className="mb-6">
         <div className="flex justify-between items-center mb-4">
-          <Badge variant="secondary">{question.subject}</Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary">{question.subject}</Badge>
+            {customTopicTitle && (
+              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+                <Sparkles className="h-3 w-3 mr-1 text-yellow-500" />
+                {customTopicTitle}
+              </Badge>
+            )}
+          </div>
           <div className="flex items-center gap-2 text-sm font-semibold text-primary">
             <Clock className="h-4 w-4" />
             {timeLeft}s
           </div>
         </div>
         <Progress value={((currentQuestion + 1) / totalQuestions) * 100} className="h-2" />
-        <div className="text-sm text-muted-foreground mt-1">
-          Question {currentQuestion + 1} of {totalQuestions}
+        <div className="flex justify-between items-center text-xs text-muted-foreground mt-1">
+          <span>Question {currentQuestion + 1} of {totalQuestions}</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs h-6 text-primary gap-1 hover:bg-primary/10"
+            onClick={() => setShowAITutor(true)}
+          >
+            <Bot className="h-3.5 w-3.5 text-primary" />
+            Ask AI Tutor 🤖
+          </Button>
         </div>
       </div>
 
@@ -472,6 +514,14 @@ export function QuizSystem() {
             </Button>
           </CardContent>
         </Card>
+      )}
+
+      {/* AI Tutor Chat Modal */}
+      {showAITutor && (
+        <AITutorDialog
+          currentQuestion={question}
+          onClose={() => setShowAITutor(false)}
+        />
       )}
     </div>
   )
