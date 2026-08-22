@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, XCircle, Clock, Star, Trophy, ArrowRight, RotateCcw, Sparkles, Bot } from "lucide-react"
+import { CheckCircle, XCircle, Clock, Star, Trophy, ArrowRight, RotateCcw, Sparkles, Bot, Shuffle } from "lucide-react"
 import { useStudentStore } from "@/lib/store"
 import { AIQuizGenerator } from "@/components/ai-quiz-generator"
 import { AITutorDialog } from "@/components/ai-tutor-dialog"
@@ -29,7 +29,7 @@ interface QuizResult {
   points: number
 }
 
-const QUESTION_BANK: Question[] = [
+const EXTENDED_QUESTION_BANK: Question[] = [
   // Mathematics
   {
     id: 1,
@@ -64,6 +64,51 @@ const QUESTION_BANK: Question[] = [
     subject: "Mathematics",
     points: 15,
   },
+  {
+    id: 11,
+    type: "multiple-choice",
+    question: "What is 12 × 11?",
+    options: ["121", "132", "144", "122"],
+    correctAnswer: 1,
+    explanation: "12 × 10 = 120, plus 12 = 132.",
+    difficulty: "easy",
+    subject: "Mathematics",
+    points: 10,
+  },
+  {
+    id: 12,
+    type: "multiple-choice",
+    question: "Solve for x: 2x + 5 = 15",
+    options: ["x = 5", "x = 10", "x = 7.5", "x = 4"],
+    correctAnswer: 0,
+    explanation: "2x = 15 - 5 = 10, so x = 10 / 2 = 5.",
+    difficulty: "medium",
+    subject: "Mathematics",
+    points: 15,
+  },
+  {
+    id: 13,
+    type: "multiple-choice",
+    question: "What is 25% of 200?",
+    options: ["25", "40", "50", "75"],
+    correctAnswer: 2,
+    explanation: "25% = 1/4. 200 / 4 = 50.",
+    difficulty: "easy",
+    subject: "Mathematics",
+    points: 10,
+  },
+  {
+    id: 14,
+    type: "multiple-choice",
+    question: "What is the perimeter of a rectangle with length 8cm and width 5cm?",
+    options: ["26cm", "40cm", "13cm", "30cm"],
+    correctAnswer: 0,
+    explanation: "Perimeter = 2 × (length + width) = 2 × (8 + 5) = 26cm.",
+    difficulty: "medium",
+    subject: "Mathematics",
+    points: 15,
+  },
+
   // Science
   {
     id: 4,
@@ -97,6 +142,40 @@ const QUESTION_BANK: Question[] = [
     subject: "Science",
     points: 10,
   },
+  {
+    id: 15,
+    type: "multiple-choice",
+    question: "What is the chemical symbol for Gold?",
+    options: ["Ag", "Au", "Fe", "Gd"],
+    correctAnswer: 1,
+    explanation: "Au comes from the Latin word for gold, 'Aurum'.",
+    difficulty: "medium",
+    subject: "Science",
+    points: 15,
+  },
+  {
+    id: 16,
+    type: "multiple-choice",
+    question: "Which gas do human beings inhale for respiration?",
+    options: ["Carbon Dioxide", "Nitrogen", "Oxygen", "Hydrogen"],
+    correctAnswer: 2,
+    explanation: "Humans inhale Oxygen, which cells use to convert glucose into energy.",
+    difficulty: "easy",
+    subject: "Science",
+    points: 10,
+  },
+  {
+    id: 17,
+    type: "multiple-choice",
+    question: "What state of matter has a fixed volume but no fixed shape?",
+    options: ["Solid", "Liquid", "Gas", "Plasma"],
+    correctAnswer: 1,
+    explanation: "Liquids conform to the shape of their container while maintaining a constant volume.",
+    difficulty: "medium",
+    subject: "Science",
+    points: 15,
+  },
+
   // English
   {
     id: 7,
@@ -120,6 +199,29 @@ const QUESTION_BANK: Question[] = [
     subject: "English",
     points: 10,
   },
+  {
+    id: 18,
+    type: "multiple-choice",
+    question: "Choose the correct spelling:",
+    options: ["Accommodate", "Acommodate", "Accomodate", "Acomodate"],
+    correctAnswer: 0,
+    explanation: "'Accommodate' has double 'c' and double 'm'.",
+    difficulty: "medium",
+    subject: "English",
+    points: 15,
+  },
+  {
+    id: 19,
+    type: "multiple-choice",
+    question: "Which word is an antonym of 'Reluctant'?",
+    options: ["Hesitant", "Eager", "Unwilling", "Cautious"],
+    correctAnswer: 1,
+    explanation: "'Reluctant' means hesitant/unwilling, so 'Eager' is the exact opposite.",
+    difficulty: "medium",
+    subject: "English",
+    points: 15,
+  },
+
   // History
   {
     id: 9,
@@ -132,6 +234,29 @@ const QUESTION_BANK: Question[] = [
     subject: "History",
     points: 10,
   },
+  {
+    id: 20,
+    type: "multiple-choice",
+    question: "In which year did World War II end?",
+    options: ["1939", "1942", "1945", "1950"],
+    correctAnswer: 2,
+    explanation: "World War II concluded in 1945 following the surrender of Axis powers.",
+    difficulty: "medium",
+    subject: "History",
+    points: 15,
+  },
+  {
+    id: 21,
+    type: "multiple-choice",
+    question: "Which ancient civilization constructed the Pyramids of Giza?",
+    options: ["Romans", "Greeks", "Egyptians", "Persians"],
+    correctAnswer: 2,
+    explanation: "The Ancient Egyptians built the pyramids as monumental tombs for their Pharaohs.",
+    difficulty: "easy",
+    subject: "History",
+    points: 10,
+  },
+
   // Logic
   {
     id: 10,
@@ -144,7 +269,39 @@ const QUESTION_BANK: Question[] = [
     subject: "Logic",
     points: 20,
   },
+  {
+    id: 22,
+    type: "logic",
+    question: "Which number comes next in the sequence: 2, 4, 8, 16, __?",
+    options: ["20", "24", "32", "64"],
+    correctAnswer: 2,
+    explanation: "Each number is doubled: 2×2=4, 4×2=8, 8×2=16, 16×2=32.",
+    difficulty: "easy",
+    subject: "Logic",
+    points: 10,
+  },
+  {
+    id: 23,
+    type: "logic",
+    question: "If RED is coded as 18-5-4 (alphabet positions R=18, E=5, D=4), what is CAB?",
+    options: ["3-1-2", "1-2-3", "3-2-1", "12-1-3"],
+    correctAnswer: 0,
+    explanation: "C=3, A=1, B=2, so CAB = 3-1-2.",
+    difficulty: "medium",
+    subject: "Logic",
+    points: 15,
+  },
 ]
+
+// Fisher-Yates Shuffle helper
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array]
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+  return shuffled
+}
 
 export function QuizSystem() {
   const { recordQuizResult } = useStudentStore()
@@ -159,14 +316,24 @@ export function QuizSystem() {
   const [quizStarted, setQuizStarted] = useState(false)
   const [quizCompleted, setQuizCompleted] = useState(false)
   const [showAITutor, setShowAITutor] = useState(false)
+  const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>([])
 
-  const activeQuestions = customAIQuestions || (
-    selectedSubjectFilter === "All"
-      ? QUESTION_BANK
-      : QUESTION_BANK.filter(q => q.subject === selectedSubjectFilter)
-  )
+  // Prepare and shuffle questions whenever subject filter or AI questions change
+  const prepareQuestions = (subjFilter: string, aiQuestions: Question[] | null) => {
+    if (aiQuestions && aiQuestions.length > 0) {
+      return aiQuestions
+    }
+    const pool = subjFilter === "All"
+      ? EXTENDED_QUESTION_BANK
+      : EXTENDED_QUESTION_BANK.filter(q => q.subject.toLowerCase() === subjFilter.toLowerCase())
+    
+    // Pick 5 random non-repeating questions
+    const shuffledPool = shuffleArray(pool)
+    return shuffledPool.slice(0, Math.min(5, shuffledPool.length))
+  }
 
-  const question = activeQuestions[currentQuestion] || QUESTION_BANK[0]
+  const activeQuestions = shuffledQuestions.length > 0 ? shuffledQuestions : EXTENDED_QUESTION_BANK.slice(0, 4)
+  const question = activeQuestions[currentQuestion] || activeQuestions[0]
   const totalQuestions = activeQuestions.length
 
   // Timer effect
@@ -180,6 +347,8 @@ export function QuizSystem() {
   }, [timeLeft, quizStarted, showResult, quizCompleted])
 
   const startQuiz = () => {
+    const freshQuestions = prepareQuestions(selectedSubjectFilter, customAIQuestions)
+    setShuffledQuestions(freshQuestions)
     setQuizStarted(true)
     setCurrentQuestion(0)
     setQuizResults([])
@@ -189,8 +358,10 @@ export function QuizSystem() {
   }
 
   const handleAIQuizGenerated = (questions: Question[], topic: string) => {
-    setCustomAIQuestions(questions)
+    const shuffledAI = shuffleArray(questions)
+    setCustomAIQuestions(shuffledAI)
     setCustomTopicTitle(topic)
+    setShuffledQuestions(shuffledAI)
     setQuizStarted(true)
     setCurrentQuestion(0)
     setQuizResults([])
@@ -266,7 +437,7 @@ export function QuizSystem() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="text-muted-foreground text-sm">
-              Practice core syllabus subjects with standard question banks:
+              Practice core syllabus subjects with randomized, non-repeating question sets:
             </div>
 
             {/* Subject Selector */}
@@ -291,8 +462,8 @@ export function QuizSystem() {
 
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="p-3 bg-muted/50 rounded-lg">
-                <div className="font-semibold">Questions</div>
-                <div>{totalQuestions}</div>
+                <div className="font-semibold">Random Questions</div>
+                <div>5 questions per session</div>
               </div>
               <div className="p-3 bg-muted/50 rounded-lg">
                 <div className="font-semibold">Time per Question</div>
@@ -300,8 +471,9 @@ export function QuizSystem() {
               </div>
             </div>
 
-            <Button onClick={startQuiz} size="lg" className="w-full">
-              Start Preset Quiz ({selectedSubjectFilter})
+            <Button onClick={startQuiz} size="lg" className="w-full gap-2">
+              <Shuffle className="h-4 w-4" />
+              Start Randomized Quiz ({selectedSubjectFilter})
             </Button>
           </CardContent>
         </Card>
