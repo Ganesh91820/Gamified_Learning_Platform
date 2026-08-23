@@ -69,7 +69,7 @@ export function StudentDashboard() {
         </Card>
         <Card className="text-center">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-yellow-600">{studentStats.coins}</div>
+            <div className="text-2xl font-bold text-accent">{studentStats.coins}</div>
             <p className="text-sm text-muted-foreground">Coins</p>
           </CardContent>
         </Card>

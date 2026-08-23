@@ -138,7 +138,7 @@ export function LandingPage({ onEnterDashboard }: LandingPageProps) {
             <Button
               size="lg"
               onClick={onEnterDashboard}
-              className="w-full sm:w-auto h-14 px-8 text-base font-bold bg-gradient-to-r from-primary to-amber-600 hover:from-primary/90 hover:to-amber-700 shadow-xl gap-3 text-primary-foreground"
+              className="w-full sm:w-auto h-14 px-8 text-base font-bold bg-primary hover:bg-primary-dark shadow-xl gap-3 text-primary-foreground"
             >
               <Play className="h-5 w-5 fill-current" />
               Start Learning Free (Guest Mode)
@@ -173,9 +173,9 @@ export function LandingPage({ onEnterDashboard }: LandingPageProps) {
               </p>
             </Card>
 
-            <Card className="p-5 border-amber-500/20 bg-background/80 relative overflow-hidden">
-              <div className="text-3xl font-extrabold text-amber-500/20 absolute right-4 top-3">03</div>
-              <Trophy className="h-8 w-8 text-amber-500 mb-3" />
+            <Card className="p-5 border-accent/20 bg-background/80 relative overflow-hidden">
+              <div className="text-3xl font-extrabold text-accent/20 absolute right-4 top-3">03</div>
+              <Trophy className="h-8 w-8 text-accent mb-3" />
               <h3 className="font-bold text-sm text-foreground">3. Earn XP & Track Progress</h3>
               <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
                 Earn coins, level up, unlock achievement badges, and view dynamic AI performance reports.
