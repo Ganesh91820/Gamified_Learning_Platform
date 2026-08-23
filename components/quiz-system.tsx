@@ -9,6 +9,7 @@ import { CheckCircle, XCircle, Clock, Star, Trophy, ArrowRight, RotateCcw, Spark
 import { useStudentStore } from "@/lib/store"
 import { AIQuizGenerator } from "@/components/ai-quiz-generator"
 import { AITutorDialog } from "@/components/ai-tutor-dialog"
+import { recordQuizCloudSubmission } from "@/lib/supabase"
 import Link from "next/link"
 
 interface Question {
@@ -477,12 +478,16 @@ export function QuizSystem() {
         (selectedAnswer === question.correctAnswer ? (question.points + Math.max(0, Math.floor(timeLeft / 2))) : 0)
       const correctCount = quizResults.filter(r => r.correct).length + (selectedAnswer === question.correctAnswer ? 1 : 0)
       
+      const targetSubject = customTopicTitle ? `AI: ${customTopicTitle}` : (selectedSubjectFilter === "All" ? "General" : selectedSubjectFilter)
       recordQuizResult(
-        customTopicTitle ? `AI: ${customTopicTitle}` : (selectedSubjectFilter === "All" ? "General" : selectedSubjectFilter),
+        targetSubject,
         correctCount,
         totalQuestions,
         totalScore
       )
+
+      // Sync atomically to Supabase Cloud PostgreSQL
+      recordQuizCloudSubmission(targetSubject, correctCount, totalQuestions, totalScore)
     }
   }
 

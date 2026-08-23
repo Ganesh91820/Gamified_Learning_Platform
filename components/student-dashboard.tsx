@@ -36,8 +36,8 @@ export function StudentDashboard() {
   return (
     <div className="container mx-auto p-4 space-y-6">
       {/* Header */}
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold text-primary">Welcome back, Alex!</h1>
+      <div className="text-center space-y-2 pt-6">
+        <h1 className="text-3xl font-bold text-primary">Welcome back, Student Learner!</h1>
         <p className="text-muted-foreground">Ready to continue your learning adventure?</p>
       </div>
 
