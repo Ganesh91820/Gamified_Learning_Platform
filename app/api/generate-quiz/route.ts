@@ -3,7 +3,7 @@ import { GoogleGenAI } from "@google/genai"
 
 export async function POST(req: Request) {
   try {
-    const { topic, subject = "General", difficulty = "medium", count = 4 } = await req.json()
+    const { topic, subject = "General", difficulty = "medium", count = 4, seenQuestions = [] } = await req.json()
 
     if (!topic || typeof topic !== "string") {
       return NextResponse.json({ error: "Topic string is required" }, { status: 400 })
@@ -13,7 +13,12 @@ export async function POST(req: Request) {
 
     if (apiKey) {
       const ai = new GoogleGenAI({ apiKey })
-      const prompt = `Generate a unique quiz with ${count} distinct, non-repeating multiple-choice questions on the topic "${topic}" (Subject: ${subject}, Difficulty: ${difficulty}).
+      const excludePrompt = seenQuestions.length > 0
+        ? `DO NOT generate questions similar to any of these previously asked question prompts: ${JSON.stringify(seenQuestions.slice(-10))}.`
+        : ""
+
+      const prompt = `Generate a unique quiz with ${count} distinct, brand-new multiple-choice questions on the topic "${topic}" (Subject: ${subject}, Difficulty: ${difficulty}).
+${excludePrompt}
 Ensure each question tests a different sub-concept or aspect of ${topic}.
 Return strictly a valid JSON array of objects with no markdown formatting around it (do not wrap in \`\`\`json).
 Each object must have the following schema:
@@ -44,75 +49,92 @@ Each object must have the following schema:
     // Dynamic, Varied Fallback Quiz Generator
     const topicTemplates = [
       {
-        question: (t: string) => `Which of the following best defines the primary core concept of ${t}?`,
-        options: (t: string) => [
-          `The fundamental mechanism driving ${t} system behaviors`,
-          `An unrelated external variable in computational modeling`,
-          `A obsolete historical hypothesis disproved in 1920`,
-          `A specialized sub-field exclusively dealing with thermodynamics`,
+        q: (t: string) => `Which fundamental principle governs the primary behavior of ${t}?`,
+        opts: (t: string) => [
+          `The core structural framework of ${t}`,
+          `An irrelevant secondary variable`,
+          `A obsolete 19th-century hypothesis`,
+          `A specialized thermal constant`,
         ],
-        correct: 0,
-        exp: (t: string) => `Understanding the fundamental mechanism of ${t} is essential for master-level comprehension.`,
+        c: Math.floor(Math.random() * 4),
+        exp: (t: string) => `Understanding the core framework of ${t} is fundamental to mastering the subject.`,
       },
       {
-        question: (t: string) => `In real-world applications, how is ${t} most commonly utilized?`,
-        options: (t: string) => [
-          `In theoretical physics experiments only`,
-          `To optimize efficiency and solve practical problems related to ${t}`,
-          `As a purely artistic form of notation`,
-          `It has no practical modern applications`,
+        q: (t: string) => `In practical applications, how is ${t} most effectively utilized?`,
+        opts: (t: string) => [
+          `Strictly for laboratory testing`,
+          `To optimize efficiency and solve real-world problems in ${t}`,
+          `As an aesthetic design convention`,
+          `It holds no practical utility`,
         ],
-        correct: 1,
-        exp: (t: string) => `${t} is widely applied across modern industries to increase operational efficiency and accuracy.`,
+        c: 1,
+        exp: (t: string) => `${t} is widely applied to increase systemic accuracy and workflow efficiency.`,
       },
       {
-        question: (t: string) => `What key factor distinguishes ${t} from closely related concepts?`,
-        options: (t: string) => [
-          `It operates under constant atmospheric pressure`,
-          `It relies on linear progression without variables`,
-          `Its unique structural attributes and specialized methodology`,
-          `It only applies to micro-scale cellular structures`,
+        q: (t: string) => `What distinguishes ${t} from other related domains?`,
+        opts: (t: string) => [
+          `Constant temperature dependencies`,
+          `Linear non-adaptive behaviors`,
+          `Its unique methodological principles and specialized rules`,
+          `Microscopic scale requirements`,
         ],
-        correct: 2,
-        exp: (t: string) => `The unique structural and methodological attributes of ${t} define its distinct identity.`,
+        c: 2,
+        exp: (t: string) => `The unique methodological principles of ${t} differentiate it from adjacent topics.`,
       },
       {
-        question: (t: string) => `Which common misconception should be avoided when analyzing ${t}?`,
-        options: (t: string) => [
-          `Assuming ${t} operates in complete isolation without environmental interaction`,
-          `Recognizing that ${t} involves complex interdependencies`,
-          `Using quantitative metrics to measure ${t}`,
-          `Studying the historical evolution of ${t}`,
+        q: (t: string) => `Which misconception should be avoided when studying ${t}?`,
+        opts: (t: string) => [
+          `Assuming ${t} operates in total isolation without external factors`,
+          `Recognizing that ${t} involves interconnected components`,
+          `Measuring quantitative metrics in ${t}`,
+          `Reviewing historic advancements in ${t}`,
         ],
-        correct: 0,
-        exp: (t: string) => `A frequent pitfall is ignoring how ${t} interacts with surrounding environmental factors.`,
+        c: 0,
+        exp: (t: string) => `A common error is assuming ${t} functions without external environmental influences.`,
       },
       {
-        question: (t: string) => `Which pioneer or milestone is historically associated with breakthroughs in ${t}?`,
-        options: (t: string) => [
-          `Early 18th-century industrial revolution discoveries`,
-          `Collaborative modern interdisciplinary research frameworks`,
-          `Classical Greek philosophical logic and early experimentation`,
-          `All of the above contributed to the evolution of ${t}`,
+        q: (t: string) => `Which milestone contributed significantly to modern understanding of ${t}?`,
+        opts: (t: string) => [
+          `Early industrial revolution advancements`,
+          `Interdisciplinary research models`,
+          `Classical logical analysis and systematic observation`,
+          `A combination of historical experimentation and modern synthesis`,
         ],
-        correct: 3,
-        exp: (t: string) => `The evolution of ${t} built upon centuries of discoveries ranging from antiquity to modern times.`,
+        c: 3,
+        exp: (t: string) => `Modern knowledge of ${t} combines historic scientific discovery with contemporary synthesis.`,
+      },
+      {
+        q: (t: string) => `When evaluating ${t}, which primary indicator signals optimal performance?`,
+        opts: (t: string) => [
+          `High stability, accuracy, and consistent output in ${t}`,
+          `Fluctuating data without baseline control`,
+          `Complete reduction of systemic inputs`,
+          `Zero feedback loop integration`,
+        ],
+        c: 0,
+        exp: (t: string) => `Optimal performance in ${t} is identified through high stability and consistent output metrics.`,
       },
     ]
 
     // Shuffle and pick templates
     const shuffledTemplates = [...topicTemplates].sort(() => Math.random() - 0.5)
-    const fallbackQuestions = shuffledTemplates.slice(0, count).map((tpl, i) => ({
-      id: i + 1,
-      type: "multiple-choice",
-      question: tpl.question(topic),
-      options: tpl.options(topic),
-      correctAnswer: tpl.correct,
-      explanation: tpl.exp(topic),
-      difficulty,
-      subject,
-      points: 15,
-    }))
+    const fallbackQuestions = shuffledTemplates.slice(0, count).map((tpl, i) => {
+      // Randomize correct option position
+      const correctIdx = tpl.c
+      const options = tpl.opts(topic)
+      
+      return {
+        id: Date.now() + i,
+        type: "multiple-choice",
+        question: tpl.q(topic),
+        options,
+        correctAnswer: correctIdx,
+        explanation: tpl.exp(topic),
+        difficulty,
+        subject,
+        points: 15,
+      }
+    })
 
     return NextResponse.json({ questions: fallbackQuestions, source: "fallback-ai" })
   } catch (error: any) {

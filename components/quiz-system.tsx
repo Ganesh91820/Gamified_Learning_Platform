@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, XCircle, Clock, Star, Trophy, ArrowRight, RotateCcw, Sparkles, Bot, Shuffle } from "lucide-react"
+import { CheckCircle, XCircle, Clock, Star, Trophy, ArrowRight, RotateCcw, Sparkles, Bot, Shuffle, RefreshCw } from "lucide-react"
 import { useStudentStore } from "@/lib/store"
 import { AIQuizGenerator } from "@/components/ai-quiz-generator"
 import { AITutorDialog } from "@/components/ai-tutor-dialog"
@@ -32,18 +32,18 @@ interface QuizResult {
 const EXTENDED_QUESTION_BANK: Question[] = [
   // Mathematics
   {
-    id: 1,
+    id: 101,
     type: "multiple-choice",
     question: "What is 15 + 27?",
     options: ["40", "42", "44", "46"],
     correctAnswer: 1,
-    explanation: "15 + 27 = 42. Break it down: 15 + 20 = 35, then 35 + 7 = 42",
+    explanation: "15 + 27 = 42. Break it down: 15 + 20 = 35, then 35 + 7 = 42.",
     difficulty: "easy",
     subject: "Mathematics",
     points: 10,
   },
   {
-    id: 2,
+    id: 102,
     type: "multiple-choice",
     question: "What is the square root of 64?",
     options: ["6", "7", "8", "9"],
@@ -54,18 +54,18 @@ const EXTENDED_QUESTION_BANK: Question[] = [
     points: 15,
   },
   {
-    id: 3,
+    id: 103,
     type: "multiple-choice",
-    question: "If a triangle has angles 60° and 30°, what is the third angle?",
+    question: "If a triangle has interior angles 60° and 30°, what is the third angle?",
     options: ["90°", "60°", "45°", "100°"],
     correctAnswer: 0,
-    explanation: "The interior angles of any triangle sum to 180°. 180° - 60° - 30° = 90°.",
+    explanation: "Angles of a triangle sum to 180°. 180° - 60° - 30° = 90°.",
     difficulty: "medium",
     subject: "Mathematics",
     points: 15,
   },
   {
-    id: 11,
+    id: 104,
     type: "multiple-choice",
     question: "What is 12 × 11?",
     options: ["121", "132", "144", "122"],
@@ -76,18 +76,18 @@ const EXTENDED_QUESTION_BANK: Question[] = [
     points: 10,
   },
   {
-    id: 12,
+    id: 105,
     type: "multiple-choice",
     question: "Solve for x: 2x + 5 = 15",
     options: ["x = 5", "x = 10", "x = 7.5", "x = 4"],
     correctAnswer: 0,
-    explanation: "2x = 15 - 5 = 10, so x = 10 / 2 = 5.",
+    explanation: "2x = 15 - 5 = 10, so x = 5.",
     difficulty: "medium",
     subject: "Mathematics",
     points: 15,
   },
   {
-    id: 13,
+    id: 106,
     type: "multiple-choice",
     question: "What is 25% of 200?",
     options: ["25", "40", "50", "75"],
@@ -98,160 +98,204 @@ const EXTENDED_QUESTION_BANK: Question[] = [
     points: 10,
   },
   {
-    id: 14,
+    id: 107,
     type: "multiple-choice",
     question: "What is the perimeter of a rectangle with length 8cm and width 5cm?",
     options: ["26cm", "40cm", "13cm", "30cm"],
     correctAnswer: 0,
-    explanation: "Perimeter = 2 × (length + width) = 2 × (8 + 5) = 26cm.",
+    explanation: "Perimeter = 2 × (8 + 5) = 26cm.",
     difficulty: "medium",
     subject: "Mathematics",
     points: 15,
   },
+  {
+    id: 108,
+    type: "multiple-choice",
+    question: "What is the value of 3³ (3 to the power of 3)?",
+    options: ["9", "18", "27", "81"],
+    correctAnswer: 2,
+    explanation: "3 × 3 × 3 = 27.",
+    difficulty: "easy",
+    subject: "Mathematics",
+    points: 10,
+  },
 
   // Science
   {
-    id: 4,
+    id: 201,
     type: "true-false",
     question: "The Earth revolves around the Sun.",
     correctAnswer: "true",
-    explanation: "Correct! The Earth orbits around the Sun, completing one revolution in about 365.25 days.",
+    explanation: "Correct! The Earth orbits the Sun, completing one revolution in about 365.25 days.",
     difficulty: "easy",
     subject: "Science",
     points: 10,
   },
   {
-    id: 5,
+    id: 202,
     type: "multiple-choice",
     question: "Which planet is known as the Red Planet?",
     options: ["Venus", "Mars", "Jupiter", "Saturn"],
     correctAnswer: 1,
-    explanation: "Mars is called the Red Planet because of iron oxide (rust) on its surface.",
+    explanation: "Mars is called the Red Planet due to iron oxide on its surface.",
     difficulty: "medium",
     subject: "Science",
     points: 15,
   },
   {
-    id: 6,
+    id: 203,
     type: "multiple-choice",
-    question: "What process do plants use to make food using sunlight?",
+    question: "What process do plants use to create food using sunlight?",
     options: ["Respiration", "Photosynthesis", "Fermentation", "Transpiration"],
     correctAnswer: 1,
-    explanation: "Photosynthesis converts light energy, water, and CO₂ into oxygen and glucose.",
+    explanation: "Photosynthesis converts light, water, and CO₂ into glucose and oxygen.",
     difficulty: "easy",
     subject: "Science",
     points: 10,
   },
   {
-    id: 15,
+    id: 204,
     type: "multiple-choice",
     question: "What is the chemical symbol for Gold?",
     options: ["Ag", "Au", "Fe", "Gd"],
     correctAnswer: 1,
-    explanation: "Au comes from the Latin word for gold, 'Aurum'.",
+    explanation: "Au comes from the Latin word 'Aurum'.",
     difficulty: "medium",
     subject: "Science",
     points: 15,
   },
   {
-    id: 16,
+    id: 205,
     type: "multiple-choice",
-    question: "Which gas do human beings inhale for respiration?",
+    question: "Which primary gas do humans inhale during cellular respiration?",
     options: ["Carbon Dioxide", "Nitrogen", "Oxygen", "Hydrogen"],
     correctAnswer: 2,
-    explanation: "Humans inhale Oxygen, which cells use to convert glucose into energy.",
+    explanation: "Humans inhale Oxygen, essential for cellular energy production.",
     difficulty: "easy",
     subject: "Science",
     points: 10,
   },
   {
-    id: 17,
+    id: 206,
     type: "multiple-choice",
-    question: "What state of matter has a fixed volume but no fixed shape?",
+    question: "What state of matter has a definite volume but no fixed shape?",
     options: ["Solid", "Liquid", "Gas", "Plasma"],
     correctAnswer: 1,
-    explanation: "Liquids conform to the shape of their container while maintaining a constant volume.",
+    explanation: "Liquids take the shape of their container while retaining constant volume.",
     difficulty: "medium",
     subject: "Science",
     points: 15,
+  },
+  {
+    id: 207,
+    type: "multiple-choice",
+    question: "What is the hardest natural substance on Earth?",
+    options: ["Quartz", "Iron", "Diamond", "Titanium"],
+    correctAnswer: 2,
+    explanation: "Diamond rates 10 on the Mohs hardness scale.",
+    difficulty: "easy",
+    subject: "Science",
+    points: 10,
   },
 
   // English
   {
-    id: 7,
+    id: 301,
     type: "multiple-choice",
     question: "Which word is a synonym for 'Abundant'?",
     options: ["Scarce", "Plentiful", "Tiny", "Empty"],
     correctAnswer: 1,
-    explanation: "'Abundant' means present in large quantities, which is synonymous with 'Plentiful'.",
+    explanation: "'Abundant' means present in large quantities (Plentiful).",
     difficulty: "medium",
     subject: "English",
     points: 15,
   },
   {
-    id: 8,
+    id: 302,
     type: "multiple-choice",
     question: "Identify the noun in the sentence: 'The swift runner won the medal.'",
     options: ["Swift", "Runner", "Won", "Quickly"],
     correctAnswer: 1,
-    explanation: "'Runner' is the person performing the action (a noun).",
+    explanation: "'Runner' is the person performing the action (noun).",
     difficulty: "easy",
     subject: "English",
     points: 10,
   },
   {
-    id: 18,
+    id: 303,
     type: "multiple-choice",
-    question: "Choose the correct spelling:",
+    question: "Choose the correctly spelled word:",
     options: ["Accommodate", "Acommodate", "Accomodate", "Acomodate"],
     correctAnswer: 0,
-    explanation: "'Accommodate' has double 'c' and double 'm'.",
+    explanation: "'Accommodate' features double 'c' and double 'm'.",
     difficulty: "medium",
     subject: "English",
     points: 15,
   },
   {
-    id: 19,
+    id: 304,
     type: "multiple-choice",
-    question: "Which word is an antonym of 'Reluctant'?",
+    question: "Which word is an antonym for 'Reluctant'?",
     options: ["Hesitant", "Eager", "Unwilling", "Cautious"],
     correctAnswer: 1,
-    explanation: "'Reluctant' means hesitant/unwilling, so 'Eager' is the exact opposite.",
+    explanation: "'Reluctant' means hesitant; 'Eager' is its antonym.",
     difficulty: "medium",
     subject: "English",
     points: 15,
+  },
+  {
+    id: 305,
+    type: "multiple-choice",
+    question: "Identify the adjective in: 'She wore a beautiful blue dress.'",
+    options: ["She", "Wore", "Beautiful", "Dress"],
+    correctAnswer: 2,
+    explanation: "'Beautiful' and 'blue' are adjectives describing the dress.",
+    difficulty: "easy",
+    subject: "English",
+    points: 10,
   },
 
   // History
   {
-    id: 9,
+    id: 401,
     type: "multiple-choice",
     question: "Who was the first President of the United States?",
     options: ["Thomas Jefferson", "Abraham Lincoln", "George Washington", "John Adams"],
     correctAnswer: 2,
-    explanation: "George Washington served as the first U.S. President from 1789 to 1797.",
+    explanation: "George Washington served from 1789 to 1797.",
     difficulty: "easy",
     subject: "History",
     points: 10,
   },
   {
-    id: 20,
+    id: 402,
     type: "multiple-choice",
     question: "In which year did World War II end?",
     options: ["1939", "1942", "1945", "1950"],
     correctAnswer: 2,
-    explanation: "World War II concluded in 1945 following the surrender of Axis powers.",
+    explanation: "World War II ended in 1945.",
     difficulty: "medium",
     subject: "History",
     points: 15,
   },
   {
-    id: 21,
+    id: 403,
     type: "multiple-choice",
     question: "Which ancient civilization constructed the Pyramids of Giza?",
     options: ["Romans", "Greeks", "Egyptians", "Persians"],
     correctAnswer: 2,
-    explanation: "The Ancient Egyptians built the pyramids as monumental tombs for their Pharaohs.",
+    explanation: "Ancient Egyptians built the pyramids as royal tombs.",
+    difficulty: "easy",
+    subject: "History",
+    points: 10,
+  },
+  {
+    id: 404,
+    type: "multiple-choice",
+    question: "Who delivered the famous 'I Have a Dream' speech in 1963?",
+    options: ["Malcolm X", "Martin Luther King Jr.", "John F. Kennedy", "Nelson Mandela"],
+    correctAnswer: 1,
+    explanation: "Martin Luther King Jr. delivered the iconic speech during the March on Washington.",
     difficulty: "easy",
     subject: "History",
     points: 10,
@@ -259,7 +303,7 @@ const EXTENDED_QUESTION_BANK: Question[] = [
 
   // Logic
   {
-    id: 10,
+    id: 501,
     type: "logic",
     question: "If all cats are animals, and Fluffy is a cat, then Fluffy is:",
     options: ["A dog", "An animal", "A bird", "A fish"],
@@ -270,18 +314,18 @@ const EXTENDED_QUESTION_BANK: Question[] = [
     points: 20,
   },
   {
-    id: 22,
+    id: 502,
     type: "logic",
-    question: "Which number comes next in the sequence: 2, 4, 8, 16, __?",
+    question: "Which number completes the sequence: 2, 4, 8, 16, __?",
     options: ["20", "24", "32", "64"],
     correctAnswer: 2,
-    explanation: "Each number is doubled: 2×2=4, 4×2=8, 8×2=16, 16×2=32.",
+    explanation: "Each term doubles: 16 × 2 = 32.",
     difficulty: "easy",
     subject: "Logic",
     points: 10,
   },
   {
-    id: 23,
+    id: 503,
     type: "logic",
     question: "If RED is coded as 18-5-4 (alphabet positions R=18, E=5, D=4), what is CAB?",
     options: ["3-1-2", "1-2-3", "3-2-1", "12-1-3"],
@@ -291,9 +335,23 @@ const EXTENDED_QUESTION_BANK: Question[] = [
     subject: "Logic",
     points: 15,
   },
+  {
+    id: 504,
+    type: "logic",
+    question: "A doctor gives you 3 pills and tells you to take one every 30 minutes. How long will the pills last?",
+    options: ["90 minutes", "60 minutes", "30 minutes", "120 minutes"],
+    correctAnswer: 1,
+    explanation: "Pill 1 at 0 min, Pill 2 at 30 min, Pill 3 at 60 min. Total duration is 60 minutes.",
+    difficulty: "hard",
+    subject: "Logic",
+    points: 20,
+  },
 ]
 
-// Fisher-Yates Shuffle helper
+function getQuestionKey(q: Question): string {
+  return `${q.subject.toLowerCase()}:${q.question.trim().toLowerCase()}`
+}
+
 function shuffleArray<T>(array: T[]): T[] {
   const shuffled = [...array]
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -304,7 +362,7 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 
 export function QuizSystem() {
-  const { recordQuizResult } = useStudentStore()
+  const { state: studentState, recordQuizResult, markQuestionsSeen } = useStudentStore()
   const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<string>("All")
   const [customAIQuestions, setCustomAIQuestions] = useState<Question[] | null>(null)
   const [customTopicTitle, setCustomTopicTitle] = useState<string>("")
@@ -316,24 +374,41 @@ export function QuizSystem() {
   const [quizStarted, setQuizStarted] = useState(false)
   const [quizCompleted, setQuizCompleted] = useState(false)
   const [showAITutor, setShowAITutor] = useState(false)
-  const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>([])
+  const [activeQuestions, setActiveQuestions] = useState<Question[]>([])
 
-  // Prepare and shuffle questions whenever subject filter or AI questions change
-  const prepareQuestions = (subjFilter: string, aiQuestions: Question[] | null) => {
+  // SEDS Selection Algorithm: Select Unseen Shuffled Questions
+  const selectFreshQuestions = (subjFilter: string, aiQuestions: Question[] | null) => {
     if (aiQuestions && aiQuestions.length > 0) {
       return aiQuestions
     }
-    const pool = subjFilter === "All"
+
+    const seenKeys = studentState.seenQuestionKeys || []
+    
+    // Filter by subject
+    const subjectPool = subjFilter === "All"
       ? EXTENDED_QUESTION_BANK
       : EXTENDED_QUESTION_BANK.filter(q => q.subject.toLowerCase() === subjFilter.toLowerCase())
-    
-    // Pick 5 random non-repeating questions
-    const shuffledPool = shuffleArray(pool)
-    return shuffledPool.slice(0, Math.min(5, shuffledPool.length))
+
+    // Filter out previously seen questions
+    let unseenPool = subjectPool.filter(q => !seenKeys.includes(getQuestionKey(q)))
+
+    // Reset pool if all questions in this subject have been seen
+    if (unseenPool.length < 3) {
+      unseenPool = subjectPool
+    }
+
+    // Shuffle and pick 5 questions
+    const shuffled = shuffleArray(unseenPool)
+    const selected = shuffled.slice(0, Math.min(5, shuffled.length))
+
+    // Mark selected question keys as seen
+    const newKeys = selected.map(getQuestionKey)
+    markQuestionsSeen(newKeys)
+
+    return selected
   }
 
-  const activeQuestions = shuffledQuestions.length > 0 ? shuffledQuestions : EXTENDED_QUESTION_BANK.slice(0, 4)
-  const question = activeQuestions[currentQuestion] || activeQuestions[0]
+  const question = activeQuestions[currentQuestion] || activeQuestions[0] || EXTENDED_QUESTION_BANK[0]
   const totalQuestions = activeQuestions.length
 
   // Timer effect
@@ -347,8 +422,8 @@ export function QuizSystem() {
   }, [timeLeft, quizStarted, showResult, quizCompleted])
 
   const startQuiz = () => {
-    const freshQuestions = prepareQuestions(selectedSubjectFilter, customAIQuestions)
-    setShuffledQuestions(freshQuestions)
+    const freshQuestions = selectFreshQuestions(selectedSubjectFilter, customAIQuestions)
+    setActiveQuestions(freshQuestions)
     setQuizStarted(true)
     setCurrentQuestion(0)
     setQuizResults([])
@@ -361,13 +436,17 @@ export function QuizSystem() {
     const shuffledAI = shuffleArray(questions)
     setCustomAIQuestions(shuffledAI)
     setCustomTopicTitle(topic)
-    setShuffledQuestions(shuffledAI)
+    setActiveQuestions(shuffledAI)
     setQuizStarted(true)
     setCurrentQuestion(0)
     setQuizResults([])
     setShowResult(false)
     setSelectedAnswer(null)
     setTimeLeft(30)
+    
+    // Mark AI question keys as seen
+    const aiKeys = shuffledAI.map(getQuestionKey)
+    markQuestionsSeen(aiKeys)
   }
 
   const handleAnswer = () => {
@@ -417,6 +496,10 @@ export function QuizSystem() {
     setTimeLeft(30)
     setQuizStarted(false)
     setQuizCompleted(false)
+    
+    // Generate a fresh new question set on restart
+    const freshQuestions = selectFreshQuestions(selectedSubjectFilter, null)
+    setActiveQuestions(freshQuestions)
   }
 
   const totalScore = quizResults.reduce((sum, result) => sum + result.points, 0)
@@ -437,7 +520,7 @@ export function QuizSystem() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="text-muted-foreground text-sm">
-              Practice core syllabus subjects with randomized, non-repeating question sets:
+              Practice core syllabus subjects with guaranteed fresh, non-repeating questions:
             </div>
 
             {/* Subject Selector */}
@@ -462,18 +545,18 @@ export function QuizSystem() {
 
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="p-3 bg-muted/50 rounded-lg">
-                <div className="font-semibold">Random Questions</div>
-                <div>5 questions per session</div>
+                <div className="font-semibold">Unseen Questions</div>
+                <div>5 unique questions per round</div>
               </div>
               <div className="p-3 bg-muted/50 rounded-lg">
-                <div className="font-semibold">Time per Question</div>
-                <div>30 seconds</div>
+                <div className="font-semibold font-sans">Timer</div>
+                <div>30s per question</div>
               </div>
             </div>
 
             <Button onClick={startQuiz} size="lg" className="w-full gap-2">
               <Shuffle className="h-4 w-4" />
-              Start Randomized Quiz ({selectedSubjectFilter})
+              Start Fresh Quiz ({selectedSubjectFilter})
             </Button>
           </CardContent>
         </Card>
@@ -532,12 +615,12 @@ export function QuizSystem() {
             </div>
 
             <div className="flex gap-3">
-              <Button onClick={restartQuiz} variant="outline" className="flex-1 bg-transparent">
-                <RotateCcw className="h-4 w-4 mr-2" />
-                Try Another Quiz
+              <Button onClick={startQuiz} variant="default" className="flex-1">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Play Fresh Quiz
               </Button>
               <Link href="/" className="flex-1">
-                <Button className="w-full">
+                <Button variant="outline" className="w-full">
                   <Star className="h-4 w-4 mr-2" />
                   View Dashboard
                 </Button>

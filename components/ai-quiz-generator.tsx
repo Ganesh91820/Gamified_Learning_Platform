@@ -4,7 +4,8 @@ import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Sparkles, Brain, Loader2, ArrowRight } from "lucide-react"
+import { Sparkles, Brain, Loader2 } from "lucide-react"
+import { useStudentStore } from "@/lib/store"
 
 interface AIQuizGeneratorProps {
   onQuizGenerated: (questions: any[], topic: string) => void
@@ -20,6 +21,7 @@ const QUICK_TOPICS = [
 ]
 
 export function AIQuizGenerator({ onQuizGenerated }: AIQuizGeneratorProps) {
+  const { state: studentState } = useStudentStore()
   const [topic, setTopic] = useState("")
   const [subject, setSubject] = useState("Science")
   const [difficulty, setDifficulty] = useState("medium")
@@ -46,7 +48,8 @@ export function AIQuizGenerator({ onQuizGenerated }: AIQuizGeneratorProps) {
           topic: targetTopic,
           subject: targetSubject,
           difficulty,
-          count: 4,
+          count: 5,
+          seenQuestions: studentState.seenQuestionKeys || [],
         }),
       })
 
@@ -72,7 +75,7 @@ export function AIQuizGenerator({ onQuizGenerated }: AIQuizGeneratorProps) {
           AI Custom Quiz Generator (Powered by Gemini)
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Type ANY topic you want to learn about and Gemini AI will create a personalized quiz for you!
+          Type ANY topic you want to learn about and Gemini AI will create a personalized, non-repeating quiz for you!
         </p>
       </CardHeader>
       <CardContent className="space-y-4">

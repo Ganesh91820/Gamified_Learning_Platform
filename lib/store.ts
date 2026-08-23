@@ -28,6 +28,7 @@ export interface StudentState {
   }
   claimedDailyDays: number[]
   quizHistory: QuizRecord[]
+  seenQuestionKeys: string[]
 }
 
 const DEFAULT_STATE: StudentState = {
@@ -42,6 +43,7 @@ const DEFAULT_STATE: StudentState = {
   ownedItems: ["badge_math_genius"],
   equippedItems: {},
   claimedDailyDays: [1, 2, 3],
+  seenQuestionKeys: [],
   quizHistory: [
     { id: "1", subject: "Mathematics", score: 3, total: 4, accuracy: 75, pointsGained: 45, date: new Date(Date.now() - 86400000 * 2).toISOString() },
     { id: "2", subject: "Science", score: 4, total: 4, accuracy: 100, pointsGained: 60, date: new Date(Date.now() - 86400000).toISOString() },
@@ -54,7 +56,14 @@ export function getStoredState(): StudentState {
   if (typeof window === "undefined") return DEFAULT_STATE
   try {
     const data = localStorage.getItem(STORAGE_KEY)
-    if (data) return JSON.parse(data)
+    if (data) {
+      const parsed = JSON.parse(data)
+      return {
+        ...DEFAULT_STATE,
+        ...parsed,
+        seenQuestionKeys: parsed.seenQuestionKeys || [],
+      }
+    }
   } catch (e) {
     console.error("Failed to load state from localStorage", e)
   }
@@ -139,6 +148,18 @@ export function useStudentStore() {
     return updated
   }
 
+  const markQuestionsSeen = (keys: string[]) => {
+    const current = getStoredState()
+    const updatedSeen = Array.from(new Set([...current.seenQuestionKeys, ...keys]))
+    // Keep max 150 recent seen keys
+    const trimmed = updatedSeen.slice(-150)
+    const updated: StudentState = {
+      ...current,
+      seenQuestionKeys: trimmed,
+    }
+    saveStoredState(updated)
+  }
+
   const buyReward = (rewardId: string, cost: number): boolean => {
     const current = getStoredState()
     if (current.coins < cost || current.ownedItems.includes(rewardId)) {
@@ -194,6 +215,7 @@ export function useStudentStore() {
   return {
     state,
     recordQuizResult,
+    markQuestionsSeen,
     buyReward,
     claimDailyReward,
     equipItem,
