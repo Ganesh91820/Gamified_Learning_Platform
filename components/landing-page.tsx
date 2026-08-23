@@ -1,11 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Sparkles, Brain, Trophy, ShieldCheck, Mail, Lock, User, LogIn, Globe, ArrowRight, Play, CheckCircle2, Zap, HelpCircle, BookOpen } from "lucide-react"
-import { signInWithEmail, signUpWithEmail, signInWithGoogle, isSupabaseConfigured } from "@/lib/supabase"
+import { Sparkles, Brain, Trophy, ShieldCheck, Mail, Lock, User, LogIn, LogOut, Globe, ArrowRight, Play, Zap, BookOpen } from "lucide-react"
+import { signInWithEmail, signUpWithEmail, signInWithGoogle, signOutUser, getCurrentUser, isSupabaseConfigured } from "@/lib/supabase"
 
 interface LandingPageProps {
   onEnterDashboard: () => void
@@ -20,8 +20,13 @@ export function LandingPage({ onEnterDashboard }: LandingPageProps) {
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState("")
   const [successMsg, setSuccessMsg] = useState("")
+  const [currentUser, setCurrentUser] = useState<any>(null)
 
   const isConfigured = isSupabaseConfigured()
+
+  useEffect(() => {
+    getCurrentUser().then((u) => setCurrentUser(u))
+  }, [])
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -54,6 +59,7 @@ export function LandingPage({ onEnterDashboard }: LandingPageProps) {
           setErrorMsg(error.message)
         } else {
           setSuccessMsg("Signed in successfully!")
+          getCurrentUser().then((u) => setCurrentUser(u))
           setTimeout(() => onEnterDashboard(), 500)
         }
       }
@@ -74,6 +80,15 @@ export function LandingPage({ onEnterDashboard }: LandingPageProps) {
     }
   }
 
+  const handleSignOut = async () => {
+    setLoading(true)
+    await signOutUser()
+    setCurrentUser(null)
+    setSuccessMsg("Signed out successfully.")
+    setShowAuthCard(false)
+    setLoading(false)
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-primary/5 to-background text-foreground flex flex-col justify-between p-4 sm:p-8">
       {/* Top Bar */}
@@ -82,10 +97,25 @@ export function LandingPage({ onEnterDashboard }: LandingPageProps) {
           <Sparkles className="h-6 w-6 text-yellow-500 animate-spin-slow" />
           <span className="font-bold text-lg text-primary">AI Learning Platform</span>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => setShowAuthCard(!showAuthCard)} className="text-xs gap-1">
-          <LogIn className="h-3.5 w-3.5" />
-          Sign In
-        </Button>
+
+        <div className="flex items-center gap-2">
+          {currentUser ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSignOut}
+              className="text-xs gap-1.5 border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              Sign Out ({currentUser.email?.split("@")[0]})
+            </Button>
+          ) : (
+            <Button variant="ghost" size="sm" onClick={() => setShowAuthCard(!showAuthCard)} className="text-xs gap-1">
+              <LogIn className="h-3.5 w-3.5" />
+              Sign In
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="max-w-4xl mx-auto w-full space-y-10 text-center py-4">
@@ -103,7 +133,7 @@ export function LandingPage({ onEnterDashboard }: LandingPageProps) {
             An easy, interactive learning app. Take fun quizzes, generate custom AI topics, get 24/7 AI tutor help, and collect XP & badges!
           </p>
 
-          {/* PRIMARY ACTION BUTTON: Start Learning Free / Explore as Guest */}
+          {/* PRIMARY ACTION BUTTON */}
           <div className="pt-2 flex flex-col sm:flex-row justify-center items-center gap-4">
             <Button
               size="lg"
@@ -154,120 +184,143 @@ export function LandingPage({ onEnterDashboard }: LandingPageProps) {
           </div>
         </div>
 
-        {/* Optional Auth Section (Expandable or Below) */}
+        {/* Optional Auth Section */}
         {showAuthCard && (
           <div className="max-w-md mx-auto pt-2 text-left">
             <Card className="shadow-2xl border-primary/40 bg-background">
               <CardHeader className="pb-3 border-b bg-primary/5">
-                <CardTitle className="text-base font-bold flex items-center gap-2 text-primary">
-                  <ShieldCheck className="h-5 w-5 text-primary" />
-                  Sign In to Sync Progress
+                <CardTitle className="text-base font-bold flex items-center justify-between text-primary">
+                  <span className="flex items-center gap-2">
+                    <ShieldCheck className="h-5 w-5 text-primary" />
+                    {currentUser ? "Account Profile" : "Sign In to Sync Progress"}
+                  </span>
+                  {currentUser && (
+                    <Button variant="ghost" size="sm" onClick={handleSignOut} className="h-7 text-xs text-red-500 gap-1">
+                      <LogOut className="h-3.5 w-3.5" />
+                      Sign Out
+                    </Button>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6 space-y-4">
-                {!isConfigured && (
-                  <div className="p-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-lg text-xs text-blue-800 dark:text-blue-300 flex items-center gap-2">
-                    <Zap className="h-4 w-4 shrink-0 text-blue-500" />
-                    <span>Account sync will be available soon. Start learning right now in free Guest Mode!</span>
+                {currentUser ? (
+                  <div className="space-y-3">
+                    <div className="p-3 bg-primary/10 rounded-lg text-xs space-y-1">
+                      <div className="font-semibold text-primary">Signed In Account</div>
+                      <div className="text-muted-foreground">{currentUser.email}</div>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={handleSignOut} className="w-full text-xs text-red-600 gap-1.5">
+                      <LogOut className="h-3.5 w-3.5" />
+                      Sign Out of Account
+                    </Button>
                   </div>
-                )}
-
-                {/* Tab Switcher */}
-                <div className="flex bg-muted p-1 rounded-lg text-xs font-semibold">
-                  <Button
-                    type="button"
-                    variant={activeTab === "signin" ? "default" : "ghost"}
-                    className="flex-1 h-8 text-xs"
-                    onClick={() => {
-                      setActiveTab("signin")
-                      setErrorMsg("")
-                      setSuccessMsg("")
-                    }}
-                  >
-                    <LogIn className="h-3.5 w-3.5 mr-1.5" />
-                    Sign In
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={activeTab === "signup" ? "default" : "ghost"}
-                    className="flex-1 h-8 text-xs"
-                    onClick={() => {
-                      setActiveTab("signup")
-                      setErrorMsg("")
-                      setSuccessMsg("")
-                    }}
-                  >
-                    <User className="h-3.5 w-3.5 mr-1.5" />
-                    Create Account
-                  </Button>
-                </div>
-
-                {/* Form */}
-                <form onSubmit={handleAuthSubmit} className="space-y-3">
-                  {activeTab === "signup" && (
-                    <div className="space-y-1">
-                      <label className="text-xs font-semibold text-muted-foreground">Full Name:</label>
-                      <div className="relative">
-                        <User className="h-4 w-4 absolute left-3 top-2.5 text-muted-foreground" />
-                        <input
-                          type="text"
-                          placeholder="Alex Johnson"
-                          value={fullName}
-                          onChange={(e) => setFullName(e.target.value)}
-                          className="w-full pl-9 pr-3 py-2 text-xs border rounded-md bg-background"
-                        />
+                ) : (
+                  <>
+                    {!isConfigured && (
+                      <div className="p-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-lg text-xs text-blue-800 dark:text-blue-300 flex items-center gap-2">
+                        <Zap className="h-4 w-4 shrink-0 text-blue-500" />
+                        <span>Account sync will be available soon. Start learning right now in free Guest Mode!</span>
                       </div>
+                    )}
+
+                    {/* Tab Switcher */}
+                    <div className="flex bg-muted p-1 rounded-lg text-xs font-semibold">
+                      <Button
+                        type="button"
+                        variant={activeTab === "signin" ? "default" : "ghost"}
+                        className="flex-1 h-8 text-xs"
+                        onClick={() => {
+                          setActiveTab("signin")
+                          setErrorMsg("")
+                          setSuccessMsg("")
+                        }}
+                      >
+                        <LogIn className="h-3.5 w-3.5 mr-1.5" />
+                        Sign In
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={activeTab === "signup" ? "default" : "ghost"}
+                        className="flex-1 h-8 text-xs"
+                        onClick={() => {
+                          setActiveTab("signup")
+                          setErrorMsg("")
+                          setSuccessMsg("")
+                        }}
+                      >
+                        <User className="h-3.5 w-3.5 mr-1.5" />
+                        Create Account
+                      </Button>
                     </div>
-                  )}
 
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-muted-foreground">Email Address:</label>
-                    <div className="relative">
-                      <Mail className="h-4 w-4 absolute left-3 top-2.5 text-muted-foreground" />
-                      <input
-                        type="email"
-                        placeholder="alex@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2 text-xs border rounded-md bg-background"
-                      />
-                    </div>
-                  </div>
+                    {/* Form */}
+                    <form onSubmit={handleAuthSubmit} className="space-y-3">
+                      {activeTab === "signup" && (
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold text-muted-foreground">Full Name:</label>
+                          <div className="relative">
+                            <User className="h-4 w-4 absolute left-3 top-2.5 text-muted-foreground" />
+                            <input
+                              type="text"
+                              placeholder="Alex Johnson"
+                              value={fullName}
+                              onChange={(e) => setFullName(e.target.value)}
+                              className="w-full pl-9 pr-3 py-2 text-xs border rounded-md bg-background"
+                            />
+                          </div>
+                        </div>
+                      )}
 
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-muted-foreground">Password:</label>
-                    <div className="relative">
-                      <Lock className="h-4 w-4 absolute left-3 top-2.5 text-muted-foreground" />
-                      <input
-                        type="password"
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2 text-xs border rounded-md bg-background"
-                      />
-                    </div>
-                  </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold text-muted-foreground">Email Address:</label>
+                        <div className="relative">
+                          <Mail className="h-4 w-4 absolute left-3 top-2.5 text-muted-foreground" />
+                          <input
+                            type="email"
+                            placeholder="alex@example.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full pl-9 pr-3 py-2 text-xs border rounded-md bg-background"
+                          />
+                        </div>
+                      </div>
 
-                  {errorMsg && <p className="text-xs text-red-500 font-medium">{errorMsg}</p>}
-                  {successMsg && <p className="text-xs text-green-600 font-medium">{successMsg}</p>}
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold text-muted-foreground">Password:</label>
+                        <div className="relative">
+                          <Lock className="h-4 w-4 absolute left-3 top-2.5 text-muted-foreground" />
+                          <input
+                            type="password"
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full pl-9 pr-3 py-2 text-xs border rounded-md bg-background"
+                          />
+                        </div>
+                      </div>
 
-                  <Button type="submit" disabled={loading || !isConfigured} className="w-full text-xs h-9 font-semibold">
-                    {loading ? "Processing..." : activeTab === "signup" ? "Create Account" : "Sign In"}
-                  </Button>
-                </form>
+                      {errorMsg && <p className="text-xs text-red-500 font-medium">{errorMsg}</p>}
+                      {successMsg && <p className="text-xs text-green-600 font-medium">{successMsg}</p>}
 
-                {isConfigured && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="w-full text-xs h-8 gap-1.5"
-                    onClick={handleGoogleSignIn}
-                    disabled={loading}
-                  >
-                    <Globe className="h-3.5 w-3.5 text-blue-500" />
-                    Sign in with Google
-                  </Button>
+                      <Button type="submit" disabled={loading || !isConfigured} className="w-full text-xs h-9 font-semibold">
+                        {loading ? "Processing..." : activeTab === "signup" ? "Create Account" : "Sign In"}
+                      </Button>
+                    </form>
+
+                    {isConfigured && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="w-full text-xs h-8 gap-1.5"
+                        onClick={handleGoogleSignIn}
+                        disabled={loading}
+                      >
+                        <Globe className="h-3.5 w-3.5 text-blue-500" />
+                        Sign in with Google
+                      </Button>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>
